@@ -1,0 +1,8 @@
+.flex-align-gap{
+	display: flex;
+	align-items: center;
+	gap: 1em;
+}
+.flex-align-gap>label{
+	margin-bottom: unset;
+}

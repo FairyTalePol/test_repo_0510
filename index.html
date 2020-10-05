@@ -1,0 +1,385 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+        <meta charset="utf-8" />
+        <title>Доска объявлений</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta content="dashboard" name="description" />
+        <meta content="me" name="author" />
+        
+        <link rel="shortcut icon" href="assets/images/favicon.ico">
+
+       
+        <link href="assets/css/vendor/jquery-jvectormap-1.2.2.css" rel="stylesheet" type="text/css" />
+        
+        <link href="assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+        <link href="assets/css/app.min.css" rel="stylesheet" type="text/css" />
+        <link href="assets/css/custom.css" rel="stylesheet" type="text/css" />
+	
+  <script>
+	
+
+	
+	
+	//Валидацию входящих данных
+	
+
+	window.onload = function () {
+	
+		
+		
+		
+		
+		
+		
+	} 
+	
+	function add_adv()
+	{
+		var adv = {};
+		adv.name = document.getElementById("adv_name").value;
+		adv.descr = document.getElementById("adv_descr").value;
+		adv.photos = document.getElementById("adv_links").value;
+		adv.price =document.getElementById("adv_prive").value;
+		
+		var req = {};
+		req.command = "add_adv";
+		req.params = adv;		
+		
+		console.log(req);
+		
+		
+		
+		SendWebRequest(req,callback_fun);
+	}
+	
+	function callback_fun(data)
+	{
+		document.getElementById("adv_name").value="";
+		document.getElementById("adv_descr").value="";
+		document.getElementById("adv_links").value="";
+		document.getElementById("adv_prive").value="";
+	    alert("Объявлению присвоен ID "+data);
+	}
+	
+	function get_adv()
+	{
+		var params = {};
+		
+		
+		
+		params.id= document.getElementById("adv_id_out").value;
+		params.all_photos = document.getElementById("customCheck2").checked==true?1:0;
+		params.descr = document.getElementById("customCheck1").checked==true?1:0;
+		
+		var req = {};
+		req.command = "get_adv";
+		req.params = params;		
+		
+		console.log(req);
+		
+		
+		SendWebRequest(req,display_adv,false);
+	}
+	
+	function display_adv(data)
+	{
+		data = data[0];
+		document.getElementById("adv_name_out").value = data.name;
+		document.getElementById("adv_descr_out").value = data.descr!=undefined?data.descr:"";
+		document.getElementById("adv_links_out").value = data.photos;
+		document.getElementById("adv_prive_out").value = data.price;
+	}
+	
+	function get_adv_list()
+	{
+		var req = {};
+		req.command = "get_adv_list";
+		req.params = "";	
+		
+		SendWebRequest(req,display_adv_list,false);
+	}
+	
+	var current = 0;
+	var page = 1;
+	
+	function display_adv_list(data)
+	{
+		console.log(data);
+		
+		adv_data = data;
+	
+		
+		var bts = document.getElementById("buttons_isides") ;
+		bts.innerHTML = ' <h4 class="header-title">Список объявлений (страница '+page+')</h4><button  class="btn btn-primary mb-2" onclick="get_adv_list()" >Получить</button>   <button  class="btn btn-primary mb-2" onclick="order_by(\'creation\')" >Сортировать по дате добавления</button>   <button  class="btn btn-primary mb-2" onclick="order_by(\'price\')" >Сортировать по цене</button> ';
+		
+	
+		var res = '';
+		res+='<div class="table-responsive-sm"><table class="table table-centered mb-0"><thead><tr><th>Name</th> <th>Photos</th><th>Price</th></tr></thead><tbody>';
+		console.log(current);
+		console.log(data.length);
+		console.log((current+10)<data.length?(current+10):data.length);
+		for (let i = current; i < ((current+10)<data.length?(current+10):data.length); i++) { 
+		  res+='<tr><td>'+data[i].name+'</td><td>'+data[i].photos+'</td><td>'+data[i].price+'</td></tr>';
+		}
+			
+		res+='</tbody> </table></div> ';
+		
+		
+		var div_ = document.getElementById("table_isides") ;
+		div_.innerHTML = res;
+										
+	}
+	
+	function go_right(){
+		
+		
+		if (current<(adv_data.length-10))
+		{
+			current+=10;
+			page++;
+		}
+		display_adv_list(adv_data);
+		
+	}
+	
+	function go_left(){
+		current-=10;
+		page--;
+		if(page<1)
+			page=1;
+		
+		if (current<0)
+			current=0;
+		display_adv_list(adv_data);
+	}
+	
+	var adv_data;
+	var last = '';
+	
+	
+	function order_by(subj)
+	{
+		var data = adv_data;
+		
+		
+		
+		data.sort((a, b) => (Number.parseInt(a.subj) > Number.parseInt(b.subj)) ? 1 : -1);
+		console.log(last + ":"+subj);
+		if (last==subj)
+		{
+			//data = data.reverse();
+			last='';
+		}
+		else
+			last = subj;
+		
+		adv_data = data;
+		
+		display_adv_list(data);
+		
+		
+	}
+	
+	
+	
+	
+	
+	
+	function ShowWarning(error,data = ''){
+		$("#warning-alert-message").html(error);
+		$("#warning-alert-body").html(data);
+		$("#warning-alert").modal('show');
+	}
+	
+	function SendWebRequest(req,callback,timeout = 30000){
+		var data;
+		
+		data = JSON.stringify(req);
+		
+		if(!Number.isInteger(timeout))
+			timeout = 30000;
+		$.ajax({
+						url         : 'sys/index.php',
+						type        : 'POST',
+						timeout		: timeout,
+						data        : data,
+						cache       : false,
+						contentType : false,
+						processData : false,
+						success     : function(resp, textStatus, jqXHR){
+										console.log(resp);
+										
+										try {
+											obj = JSON.parse(resp);
+										} catch(e) {
+											//console.log("Error response: " + e.message + " - " + resp);
+											ShowWarning(e.message,resp.substring(0, 150));
+										}
+										
+										if (obj.success != 0)
+										{	
+											alert(obj.message);
+											
+											obj.data = null;
+										}
+
+										if(callback && obj.success==0){
+											
+											callback(obj.data);	
+										}
+										return obj;
+									},
+				});
+	}
+	
+	
+  </script>
+    </head>
+
+    <body>
+
+       
+        <div class="navbar-custom topnav-navbar">
+            <div class="container-fluid">
+
+                
+                <a href="index.html" class="topnav-logo">
+                    <span class="topnav-logo-lg">
+                        Доска объявлений
+                    </span>
+                    <span class="topnav-logo-sm">
+                        <img src="assets/images/logo_sm.png" alt="" height="16">
+                    </span>
+                </a>
+
+              
+                
+               
+            </div>
+        </div>
+		
+		<div id="server_response_field">
+			
+		</div>
+		
+		<div class="row">
+		
+                            <div class="col-md-4">
+								<div class="card">
+                                    <div class="card-body">
+                                        <h4 class="header-title mt-0 mb-3">Добавление нового объявления</h4>
+                                        <p class="text-muted font-13">
+                                            Объявления имеют поле "Имя", "Описание", "Ссылки на фото" (указываются через запятую), "Цена". Поля "дата добавления" и внутренний id присвоятся автоматически.
+                                        </p>
+
+                                        <hr/>
+
+                                        <div class="text-left">
+										<div class="form-row align-items-center"> <p class="text-muted"><strong>Имя :</strong> <textarea maxlength="200" class="form-control" id="adv_name" rows="5"></textarea></p></div>
+                                         
+
+                                        <div class="form-row align-items-center">   <p class="text-muted"><strong>Описание :</strong><textarea maxlength="1000" class="form-control" id="adv_descr" rows="5"></textarea></p></div>
+
+                                        <div class="form-row align-items-center">    <p class="text-muted"><strong>Ссылки :</strong><textarea class="form-control" id="adv_links" rows="5"></textarea></p></div>
+
+                                        <div class="form-row align-items-center">   <p class="text-muted"><strong>Цена :</strong> <input type="text" id="adv_prive" class="form-control"></p></div>
+
+                                        <button  class="btn btn-primary mb-2" onclick="add_adv()">Добавить</button>
+                                          
+                                        </div>
+                                    </div>
+                                </div>
+							</div>
+							
+							
+							<div class="col-md-4">
+								<div class="card">
+                                    <div class="card-body">
+                                        <h4 class="header-title mt-0 mb-3">Вывод одного объявления из базы</h4>
+                                        <p class="text-muted font-13">
+                                            Получает объявление из базы по вводимому индексу.
+                                        </p>
+
+                                        <hr/>
+                                                    <div class="custom-control custom-checkbox">
+                                                        <input type="checkbox" class="custom-control-input" id="customCheck1">
+                                                        <label class="custom-control-label" for="customCheck1">Получить описание</label>
+                                                    </div>
+                                                    <div class="custom-control custom-checkbox">
+                                                        <input type="checkbox" class="custom-control-input" id="customCheck2">
+                                                        <label class="custom-control-label" for="customCheck2">Получить все ссылкии</label>
+                                                    </div>
+                                        <div class="text-left">
+										<div class="form-row align-items-left"> <p class="text-muted"><strong>Индекс :</strong> <input type="text" id="adv_id_out" width="50%" class="form-control"></p></div>
+										
+										<div class="form-row align-items-left"> <p class="text-muted"><strong>Имя :</strong><textarea readonly class="form-control" id="adv_name_out" rows="5"></textarea> </p></div>
+                                         
+
+                                        <div class="form-row align-items-center">   <p class="text-muted"><strong>Описание :</strong><textarea readonly class="form-control" id="adv_descr_out" rows="5"></textarea></p></div>
+
+                                        <div class="form-row align-items-center">    <p class="text-muted"><strong>Ссылки :</strong><textarea readonly class="form-control" id="adv_links_out" rows="5"></textarea></p></div>
+
+                                        <div class="form-row align-items-center">   <p class="text-muted"><strong>Цена :</strong> <input readonly  type="text" id="adv_prive_out" class="form-control"></p></div>
+
+                                        <button  class="btn btn-primary mb-2" onclick="get_adv()">Получить</button>
+                                          
+                                        </div>
+                                    </div>
+                                </div>
+							</div>
+        </div>
+		
+		
+						<div class="row">
+                            <div class="col-xl-6">
+                                <div class="card">
+                                    <div class="card-body">
+
+                                       
+										 
+										<div id='buttons_isides'>
+										<h4 class="header-title">Список объявлений</h4>
+										
+                                         <button  class="btn btn-primary mb-2" onclick="get_adv_list()" >Получить</button>
+										</div>
+										<div id='table_isides'>
+                                        <div class="table-responsive-sm">
+                                           Здесь отобразятся объявления
+                                        </div> <!-- end table-responsive-->
+										
+										 
+                                    </div> 
+									<button  class="btn btn-primary mb-2" onclick="go_left()"><</button>
+										  <button  class="btn btn-primary mb-2" onclick="go_right()">></button><!-- end card body-->
+                                </div> <!-- end card -->
+                            </div><!-- end col-->
+							</div>
+      
+
+        
+		
+		
+		
+										<div id="warning-alert" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+                                            <div class="modal-dialog modal-sm">
+                                                <div class="modal-content">
+                                                    <div class="modal-body p-4">
+                                                        <div class="text-center">
+                                                            <i class="dripicons-warning h1 text-warning"></i>
+                                                            <h4 class="mt-2">Ошибка сервера!</h4>
+                                                            <p class="mt-3" id = "warning-alert-message"></p>
+															<p class="mt-3" id = "warning-alert-body"></p>
+                                                            <button type="button" class="btn btn-warning my-2" data-dismiss="modal">Что же делать?</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+       
+        <script src="assets/js/app.min.js"></script>
+
+    </body>
+
+</html>

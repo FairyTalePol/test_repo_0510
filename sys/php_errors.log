@@ -1,0 +1,6 @@
+[05-Oct-2020 04:47:53 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function SendErrorMessage() in D:\Wamp\www\test_work\sys\classes.php:28
+Stack trace:
+#0 D:\Wamp\www\test_work\sys\processor.php(46): ToJson(Object(Response))
+#1 D:\Wamp\www\test_work\sys\index.php(24): Process()
+#2 {main}
+  thrown in D:\Wamp\www\test_work\sys\classes.php on line 28
